@@ -1,0 +1,30 @@
+{
+  "version": "0.1.0",
+  "prompts": [
+    {
+      "id": "real-wage-growth-vs-cpi",
+      "prompt": "Show real wage growth versus CPI over the last two decades.",
+      "expectedConceptIds": ["ahe-private", "cpi-u-all-items"],
+      "expectedViewSpec": "packages/spec/fixtures/real-wage-growth-vs-cpi.json",
+      "notes": "Must deflate CES0500000003 explicitly. Do not treat AHE as real on arrival."
+    },
+    {
+      "id": "unemployment-vs-payrolls",
+      "prompt": "Unemployment rate against nonfarm payrolls, last 24 months.",
+      "expectedConceptIds": ["unemployment-rate", "nonfarm-payrolls"],
+      "notes": "Two surveys (CPS vs CES). Dual axis is a last resort — prefer levels + change callouts."
+    },
+    {
+      "id": "core-vs-headline-inflation",
+      "prompt": "Headline CPI versus core CPI and PCE.",
+      "expectedConceptIds": ["cpi-u-all-items", "cpi-u-core", "pce-price-index"],
+      "notes": "Three indexes, three constructions. Annotation required."
+    },
+    {
+      "id": "policy-rate-and-10y",
+      "prompt": "Fed funds versus the 10-year Treasury.",
+      "expectedConceptIds": ["fed-funds", "treasury-10y"],
+      "notes": "Monthly average vs daily yield. Align frequency before overlay."
+    }
+  ]
+}

@@ -1,0 +1,214 @@
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 28px 22px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 28px;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.wordmark {
+  color: var(--signal);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  text-indent: 0.42em;
+}
+
+.rule {
+  width: 28px;
+  height: 1px;
+  background: var(--structure);
+}
+
+.kicker,
+.foot,
+.field-label,
+.hint,
+.status,
+.panel-head p {
+  color: var(--dot);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.status[data-state="ok"] {
+  color: var(--text);
+}
+
+.status[data-state="ok"]::before,
+.status[data-state="shell"]::before,
+.status[data-state="checking"]::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--structure);
+  vertical-align: 0;
+}
+
+.status[data-state="ok"]::before {
+  background: var(--signal);
+}
+
+.stage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 18px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--structure);
+  padding: 22px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 360px;
+}
+
+.panel-head h1,
+.panel-head h2 {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.panel-head p {
+  letter-spacing: 0.08em;
+  text-transform: none;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.field-label {
+  letter-spacing: 0.22em;
+}
+
+textarea {
+  flex: 1;
+  min-height: 160px;
+  resize: vertical;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--structure);
+  padding: 14px;
+  outline: none;
+}
+
+textarea::placeholder {
+  color: var(--dot);
+}
+
+textarea:focus {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 3px var(--signal-soft);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+button {
+  appearance: none;
+  border: 1px solid var(--structure);
+  background: transparent;
+  color: var(--dot);
+  padding: 8px 16px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 11px;
+  cursor: not-allowed;
+}
+
+button:disabled {
+  opacity: 0.7;
+}
+
+.hint {
+  letter-spacing: 0.08em;
+  text-transform: none;
+  font-size: 11px;
+}
+
+.provenance .stub {
+  border: 1px dashed var(--structure);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.stub-signal {
+  color: var(--signal);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.stub p:last-child {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 26px;
+  letter-spacing: 0.16em;
+}
+
+.sep {
+  color: var(--structure);
+}
+
+@media (max-width: 800px) {
+  .shell {
+    padding: 20px 16px 18px;
+  }
+
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
