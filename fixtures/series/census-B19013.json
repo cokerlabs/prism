@@ -1,0 +1,11 @@
+{
+  "_recorded_from": "Census ACS API shape",
+  "_recorded_at": "2026-09-12T00:00:00.000Z",
+  "_variable": "B19013_001E",
+  "_year": "2023",
+  "_product": "acs1",
+  "table": [
+    ["NAME", "B19013_001E", "us"],
+    ["United States", "77719", "1"]
+  ]
+}

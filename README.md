@@ -4,8 +4,6 @@ Coker Labs — generative UI for economic data.
 
 Prism composes views from a curated catalog of official series (FRED, BLS, ACS). The point is to liberate knowledge from bad UI: ask a question, get a chart you can defend. Sources, transforms, and caveats are part of the view, not a footnote.
 
-This repository is the Prism Worker and UI. Agency fetches, compose, and application-level auth live outside this codebase. Access is enforced at the Cloudflare edge.
-
 ## Access
 
 Prism is reachable **only** under existing Cloudflare Access applications:
@@ -30,10 +28,13 @@ To make Prism public, change the Cloudflare Access application (or its path) in 
 ```
 wrangler.toml
 apps/web/            UI, served at /in/prism/
-apps/worker/         Worker entry: static + /in/prism/api/*
-packages/spec/       Zod ViewSpec
-packages/catalog/    Curated series (FRED / BLS / ACS)
-packages/transforms/ Pure transforms
+apps/worker/         Worker: static + /in/prism/api/*
+apps/worker/src/clients/  FRED, BLS, Census
+packages/spec/       Zod ViewSpec + series types
+packages/catalog/    Curated concepts
+packages/resolver/   Concept → native id (no silent remap)
+packages/transforms/ level, pc1, and related pure functions
+fixtures/series/     Recorded FRED / BLS / ACS payloads
 fixtures/prompts/    Golden prompts
 ```
 
@@ -46,7 +47,7 @@ pnpm install
 pnpm dev            # Vite UI at http://localhost:5173/in/prism/
 ```
 
-`http://localhost:5173/` returns 404. The Vite dev server handles `GET /in/prism/api/health`.
+`http://localhost:5173/` returns 404. The Vite dev server serves `/in/prism/api/*`. Recorded fixtures cover CPIAUCSL, UNRATE, and PAYEMS when `FRED_API_KEY` is not set. Live FRED is used when that key is present in the environment.
 
 Production-shaped local (static assets + Worker):
 
@@ -60,6 +61,20 @@ pnpm typecheck
 pnpm test
 pnpm build
 ```
+
+## API
+
+All routes live under `/in/prism/api/`.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/in/prism/api/health` | `{ "ok": true, "service": "prism" }` |
+| GET | `/in/prism/api/catalog` | Curated concepts |
+| GET | `/in/prism/api/series/:conceptId` | Observations + provenance echo |
+
+Series query parameters: `seasonal_adjustment` (`SA` \| `NSA` \| `NA`), `price_basis` (`nominal` \| `real` \| `index`), `transform` (`level` \| `pc1`), `vintage_policy` (`latest` \| `as_of`), `as_of`, `observation_start`, `observation_end`.
+
+If a requested seasonal adjustment or price basis does not match the concept, the route returns `409` with structured clarify choices. Prism does not remap SA/NSA or real/nominal. Missing agency keys return `503` with `{ "message": "Data source unavailable" }`.
 
 ## Deploy
 
@@ -77,15 +92,23 @@ Primary host: **cokerlabs.dev/in/prism/**.
 
 ## Secrets
 
+Agency pulls read Worker secrets. They are optional at build time. Series routes return **Data source unavailable** when the needed binding is missing.
+
+```bash
+wrangler secret put FRED_API_KEY
+wrangler secret put BLS_API_KEY
+wrangler secret put CENSUS_API_KEY
+```
+
 | Binding | Used for |
 | --- | --- |
 | `FRED_API_KEY` | FRED series pull |
 | `BLS_API_KEY` | BLS public API |
 | `CENSUS_API_KEY` | ACS / Census |
-| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Compose |
+| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Compose (unused) |
 
-KV is reserved for cache. No keys are required to run the current Worker. `/in/prism/api/health` returns `{ "ok": true, "service": "prism" }`.
+For local Wrangler, copy `.dev.vars.example` to `.dev.vars` (not committed).
 
 ## Current scope
 
-This repository does not include live FRED/BLS/ACS fetch, LLM compose, application auth, maps, or Python.
+This repository does not include LLM compose, application auth, maps, or Python.

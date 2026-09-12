@@ -2,7 +2,15 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { ViewSpec, parseViewSpec } from "../src/view-spec";
+import { SeriesRequest } from "../src/series";
+import {
+  ObservationTransform,
+  PriceBasis,
+  SeasonalAdjustment,
+  VintagePolicy,
+  ViewSpec,
+  parseViewSpec,
+} from "../src/view-spec";
 
 const fixturePath = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -36,3 +44,15 @@ describe("ViewSpec", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("series enums", () => {
+  it("accepts forced seasonal, price, transform, and vintage values", () => {
+    expect(SeasonalAdjustment.parse("NA")).toBe("NA");
+    expect(PriceBasis.parse("real")).toBe("real");
+    expect(ObservationTransform.parse("pc1")).toBe("pc1");
+    expect(VintagePolicy.parse("as_of")).toBe("as_of");
+    expect(SeriesRequest.parse({}).transform).toBe("level");
+    expect(SeriesRequest.parse({}).vintage_policy).toBe("latest");
+  });
+});
+

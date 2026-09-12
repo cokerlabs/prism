@@ -1,29 +1,65 @@
-/**
- * Pure transform stubs. No I/O, no agency fetches.
- * Implementations land with the first compose pipeline — keep these side-effect free.
- */
+import type { Observation, ObservationTransform } from "@prism/spec";
 
 export type NumericSeries = readonly number[];
 
-/** Year-over-year percent change. Stub: returns NaN-aligned output. */
-export function yoy(values: NumericSeries, periodsPerYear = 12): number[] {
+export type TransformFrequency =
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "quarterly"
+  | "annual";
+
+export function periodsForFrequency(frequency: TransformFrequency): number {
+  switch (frequency) {
+    case "daily":
+      return 365;
+    case "weekly":
+      return 52;
+    case "monthly":
+      return 12;
+    case "quarterly":
+      return 4;
+    case "annual":
+      return 1;
+  }
+}
+
+/** Published level. Finite values pass through; non-finite become NaN. */
+export function level(values: NumericSeries): number[] {
+  return values.map((value) =>
+    Number.isFinite(value) ? value : Number.NaN,
+  );
+}
+
+/** Year-over-year percent change (FRED pc1). */
+export function pc1(values: NumericSeries, periodsPerYear = 12): number[] {
   return values.map((value, index) => {
     const prior = values[index - periodsPerYear];
-    if (prior === undefined || prior === 0 || !Number.isFinite(value)) {
+    if (
+      prior === undefined ||
+      prior === 0 ||
+      !Number.isFinite(value) ||
+      !Number.isFinite(prior)
+    ) {
       return Number.NaN;
     }
     return ((value - prior) / prior) * 100;
   });
 }
 
-/** Month-over-month percent change. Stub aligned to one period. */
+/** Year-over-year percent change. Alias of pc1. */
+export function yoy(values: NumericSeries, periodsPerYear = 12): number[] {
+  return pc1(values, periodsPerYear);
+}
+
+/** Period-over-period percent change. */
 export function mom(values: NumericSeries): number[] {
-  return yoy(values, 1);
+  return pc1(values, 1);
 }
 
 /**
  * Deflate a nominal series by a price index (same length, same vintage).
- * Stub: element-wise nominal / (index / 100). Callers must align dates first.
+ * Element-wise nominal / (index / 100). Callers must align dates first.
  */
 export function deflate(
   nominal: NumericSeries,
@@ -56,4 +92,25 @@ export function indexToBase(values: NumericSeries): number[] {
   return values.map((value) =>
     Number.isFinite(value) ? (value / base) * 100 : Number.NaN,
   );
+}
+
+export function applyTransform(
+  observations: readonly Observation[],
+  transform: ObservationTransform,
+  frequency: TransformFrequency,
+): Observation[] {
+  if (transform === "level") {
+    return observations.map((observation) => ({ ...observation }));
+  }
+  const values = observations.map((observation) =>
+    observation.value === null ? Number.NaN : observation.value,
+  );
+  const transformed = pc1(values, periodsForFrequency(frequency));
+  return observations.map((observation, index) => {
+    const value = transformed[index];
+    return {
+      date: observation.date,
+      value: value !== undefined && Number.isFinite(value) ? value : null,
+    };
+  });
 }

@@ -1,6 +1,7 @@
-# Future secrets — unused by this scaffold. Do not commit real values.
-# FRED_API_KEY=
-# BLS_API_KEY=
-# CENSUS_API_KEY=
+# Worker secrets for local Wrangler (`pnpm dev:worker`).
+# Copy to `.dev.vars` and fill in. Do not commit real values.
+FRED_API_KEY=
+BLS_API_KEY=
+CENSUS_API_KEY=
 # OPENAI_API_KEY=
 # ANTHROPIC_API_KEY=

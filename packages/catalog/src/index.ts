@@ -1,7 +1,13 @@
 import catalogJson from "../data/concepts.json";
 import { Catalog, type Concept } from "./schema";
 
-export { Catalog, Concept, Frequency, Geography } from "./schema";
+export {
+  Catalog,
+  Concept,
+  Counterpart,
+  Frequency,
+  Geography,
+} from "./schema";
 
 export const catalog = Catalog.parse(catalogJson);
 
