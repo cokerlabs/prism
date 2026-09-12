@@ -1,0 +1,44 @@
+:root {
+  --bg: #0a0d14;
+  --structure: #2e3a4c;
+  --dot: #46566c;
+  --text: #8b97a8;
+  --signal: #e8a33d;
+  --signal-soft: rgba(232, 163, 61, 0.14);
+  --panel: rgba(14, 18, 26, 0.92);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--signal-soft);
+  color: var(--signal);
+}

@@ -1,0 +1,111 @@
+{
+  "version": "0.1.0",
+  "id": "real-wage-growth-vs-cpi",
+  "title": "Real wage growth vs CPI",
+  "subtitle": "Average hourly earnings deflated by CPI-U, year-over-year, against headline inflation.",
+  "provenance": {
+    "prompt": "Show real wage growth versus CPI over the last two decades.",
+    "composedAt": "2026-09-12T00:00:00.000Z",
+    "sources": [
+      {
+        "agency": "BLS",
+        "distributor": "FRED",
+        "seriesIds": ["CES0500000003", "CPIAUCSL"],
+        "url": "https://fred.stlouisfed.org/series/CES0500000003",
+        "notes": "AHE is CES establishment survey, total private. CPI-U is all urban consumers, all items."
+      }
+    ],
+    "transforms": [
+      {
+        "name": "deflate",
+        "args": { "nominal": "ahe-private", "deflator": "cpi-u-all-items" }
+      },
+      {
+        "name": "yoy",
+        "args": { "on": ["real-ahe", "cpi-u-all-items"] }
+      }
+    ],
+    "caveats": [
+      "Real AHE is a constructed series: nominal CES0500000003 deflated by CPIAUCSL, not an official BLS release.",
+      "AHE is for production and nonsupervisory? No — CES0500000003 is all employees, total private.",
+      "CPI-U is not the CPI-W used for some COLAs; composition differs.",
+      "Seasonally adjusted levels; YoY percent change reduces but does not remove revision risk."
+    ]
+  },
+  "layout": {
+    "kind": "stack",
+    "id": "root",
+    "direction": "column",
+    "children": [
+      {
+        "kind": "primitive",
+        "id": "real-wage-vs-cpi-chart",
+        "primitive": {
+          "type": "LineChart",
+          "title": "Real AHE vs CPI-U",
+          "subtitle": "Year-over-year percent change",
+          "series": [
+            {
+              "conceptId": "ahe-private",
+              "label": "Real AHE (YoY)",
+              "transform": "yoy",
+              "deflatorConceptId": "cpi-u-all-items",
+              "role": "primary"
+            },
+            {
+              "conceptId": "cpi-u-all-items",
+              "label": "CPI-U (YoY)",
+              "transform": "yoy",
+              "role": "compare"
+            }
+          ],
+          "x": { "kind": "time", "frequency": "monthly" },
+          "y": { "label": "Year-over-year", "unit": "percent", "scale": "linear" }
+        }
+      },
+      {
+        "kind": "primitive",
+        "id": "latest-readings",
+        "primitive": {
+          "type": "StatTable",
+          "title": "Latest readings",
+          "columns": [
+            { "key": "series", "label": "Series", "format": "text" },
+            { "key": "latest", "label": "Latest YoY", "format": "percent" },
+            { "key": "period", "label": "Period", "format": "text" }
+          ],
+          "rows": [
+            {
+              "conceptId": "ahe-private",
+              "cells": { "series": "Real AHE", "latest": null, "period": "—" }
+            },
+            {
+              "conceptId": "cpi-u-all-items",
+              "cells": { "series": "CPI-U", "latest": null, "period": "—" }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "primitive",
+        "id": "method-note",
+        "primitive": {
+          "type": "Annotation",
+          "text": "Real wages here are nominal average hourly earnings divided by CPI-U, then expressed as a year-over-year percent change. Confirm the deflator (CPI-U vs PCE) before treating this as a take-home-pay claim.",
+          "tone": "caveat",
+          "anchor": "real-wage-vs-cpi-chart"
+        }
+      },
+      {
+        "kind": "primitive",
+        "id": "provenance",
+        "primitive": {
+          "type": "ProvenanceBlock",
+          "showSources": true,
+          "showTransforms": true,
+          "showCaveats": true
+        }
+      }
+    ]
+  }
+}
