@@ -5,6 +5,7 @@
 name = "prism"
 main = "apps/worker/src/index.ts"
 compatibility_date = "2026-09-12"
+account_id = "0e0af031cb3281109b1c9846565a159a"
 
 # Disable the public *.workers.dev hostname. Prism is reachable only via
 # Cloudflare Access apps on cokerlabs.dev/in* and justincoker.com/in*.
@@ -18,29 +19,30 @@ directory = "./apps/web/dist"
 binding = "ASSETS"
 run_worker_first = true
 
-# D1 — replace database_id before first real deploy (`wrangler d1 create prism`).
+# D1 — binding DB / database_name prism
 [[d1_databases]]
 binding = "DB"
 database_name = "prism"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "b856e8c3-c21e-4c22-98c7-957958d4a58f"
 
 # KV cache (later)
 # [[kv_namespaces]]
 # binding = "CACHE"
 # id = "REPLACE_WITH_KV_NAMESPACE_ID"
 
-# Routes — attach ONLY under Access-covered /in* paths.
+# Routes — attach ONLY under Access-covered /in* paths. Keep /in/prism/ base.
 # Primary host:
-# [[routes]]
-# pattern = "cokerlabs.dev/in/prism*"
-# zone_name = "cokerlabs.dev"
-#
+[[routes]]
+pattern = "cokerlabs.dev/in/prism*"
+zone_name = "cokerlabs.dev"
+
 # Optional same-path host:
-# [[routes]]
-# pattern = "justincoker.com/in/prism*"
-# zone_name = "justincoker.com"
-#
+[[routes]]
+pattern = "justincoker.com/in/prism*"
+zone_name = "justincoker.com"
+
 # Do not add:
 #   pattern = "cokerlabs.dev/*"
 #   pattern = "justincoker.com/*"
 #   a custom domain on the Worker that points at unprotected `/`.
+#   workers_dev = true (public root app)
