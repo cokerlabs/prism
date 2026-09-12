@@ -65,15 +65,15 @@ pnpm build
 
 Primary host: **cokerlabs.dev/in/prism/**.
 
-1. Create D1 (`wrangler d1 create prism`) and paste the id into `wrangler.toml`.
-2. Attach a **route**, not a custom domain on `/`:
+1. D1 `prism` (`binding = "DB"`) and `account_id` are set in `wrangler.toml`.
+2. Routes are attached **only** under Access-covered `/in/prism*` (not a custom domain on `/`):
 
-   `cokerlabs.dev/in/prism*`  (and optionally `justincoker.com/in/prism*`)
+   `cokerlabs.dev/in/prism*`  and `justincoker.com/in/prism*`
 
 3. Confirm Cloudflare Access still covers `/in*` on that hostname.
 4. Deploy with Cloudflare Git integration on this repo, or `pnpm deploy` via Wrangler (needs `CLOUDFLARE_API_TOKEN` / account).
 
-Commented route notes live in `wrangler.toml`. Leave them commented until the Access path is verified.
+`workers_dev` stays off. Do not attach this Worker at the unprotected root.
 
 ## Secrets (later — do not add yet)
 
