@@ -44,10 +44,10 @@ export function App() {
         </div>
         <p className="status" data-state={health}>
           {health === "checking"
-            ? "checking"
+            ? "connecting"
             : health === "ok"
-              ? "api ok"
-              : "local shell"}
+              ? "online"
+              : "offline"}
         </p>
       </header>
 
@@ -68,20 +68,20 @@ export function App() {
             />
           </label>
           <div className="actions">
-            <button type="button" disabled title="Compose is stubbed until semantic confirm.">
+            <button type="button" disabled title="Compose is unavailable">
               Compose
             </button>
-            <span className="hint">Disabled on purpose. No model is wired yet.</span>
+            <span className="hint">Compose is unavailable.</span>
           </div>
         </section>
 
         <section className="panel provenance" aria-labelledby="provenance-heading">
           <div className="panel-head">
             <h2 id="provenance-heading">Provenance</h2>
-            <p>Sources, transforms, and caveats sit here after compose.</p>
+            <p>Sources, transforms, and caveats for the current view.</p>
           </div>
-          <div className="stub">
-            <p className="stub-signal">Semantic confirm comes next.</p>
+          <div className="empty">
+            <p className="empty-signal">No view yet</p>
             <p>
               Prism will not draw a series until you can see who published it,
               how it was transformed, and what it is not. That gate is the
@@ -96,7 +96,7 @@ export function App() {
         <span className="sep" aria-hidden="true">
           /
         </span>
-        <span>Access-gated · no public root</span>
+        <span>Coker Labs</span>
       </footer>
     </div>
   );

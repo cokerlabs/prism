@@ -1,19 +1,19 @@
 # Prism — Coker Labs
-# Serve only under Access-covered /in* paths. Never attach a custom domain
-# at the unprotected root of cokerlabs.dev or justincoker.com.
+# Served only under Access-covered /in* paths. Do not attach a custom
+# domain at the unprotected root of cokerlabs.dev or justincoker.com.
 
 name = "prism"
 main = "apps/worker/src/index.ts"
 compatibility_date = "2026-09-12"
 account_id = "0e0af031cb3281109b1c9846565a159a"
 
-# Disable the public *.workers.dev hostname. Prism is reachable only via
-# Cloudflare Access apps on cokerlabs.dev/in* and justincoker.com/in*.
+# The public *.workers.dev hostname is disabled. Prism is reachable only
+# via Cloudflare Access on cokerlabs.dev/in* and justincoker.com/in*.
 workers_dev = false
 
 # Nested Vite output: apps/web/dist/in/prism/** → https://host/in/prism/
 # Worker-first so `/` cannot fall through to an SPA shell. The app is
-# only served under /in/prism/; everything else is 404.
+# served only under /in/prism/; everything else is 404.
 [assets]
 directory = "./apps/web/dist"
 binding = "ASSETS"
@@ -25,18 +25,18 @@ binding = "DB"
 database_name = "prism"
 database_id = "b856e8c3-c21e-4c22-98c7-957958d4a58f"
 
-# KV cache (later)
+# KV cache (reserved)
 # [[kv_namespaces]]
 # binding = "CACHE"
 # id = "REPLACE_WITH_KV_NAMESPACE_ID"
 
-# Routes — attach ONLY under Access-covered /in* paths. Keep /in/prism/ base.
+# Routes — Access-covered /in* paths only. Base path is /in/prism/.
 # Primary host:
 [[routes]]
 pattern = "cokerlabs.dev/in/prism*"
 zone_name = "cokerlabs.dev"
 
-# Optional same-path host:
+# Same-path host:
 [[routes]]
 pattern = "justincoker.com/in/prism*"
 zone_name = "justincoker.com"
