@@ -10,10 +10,19 @@
       "seriesId": "CPIAUCSL",
       "seasonalAdjustment": "SA",
       "priceKind": "index",
+      "priceBasis": "index",
       "frequency": "monthly",
       "unit": "index_1982_1984_100",
       "geography": "US",
       "aliases": ["CPIAUCSL", "headline CPI"],
+      "counterparts": [
+        {
+          "dimension": "seasonal_adjustment",
+          "value": "NSA",
+          "seriesId": "CPIAUCNS",
+          "label": "CPI-U: all items, not seasonally adjusted"
+        }
+      ],
       "notes": "Consumer Price Index for All Urban Consumers, all items, U.S. city average. NSA counterpart is CPIAUCNS."
     },
     {
@@ -25,10 +34,19 @@
       "seriesId": "CPILFESL",
       "seasonalAdjustment": "SA",
       "priceKind": "index",
+      "priceBasis": "index",
       "frequency": "monthly",
       "unit": "index_1982_1984_100",
       "geography": "US",
       "aliases": ["CPILFESL", "core CPI"],
+      "counterparts": [
+        {
+          "dimension": "seasonal_adjustment",
+          "value": "NSA",
+          "seriesId": "CPILFENS",
+          "label": "CPI-U: all items less food and energy, not seasonally adjusted"
+        }
+      ],
       "notes": "Core CPI-U. Food and energy stripped because of volatility; not a cost-of-living claim for households that spend on those items."
     },
     {
@@ -44,6 +62,14 @@
       "unit": "percent",
       "geography": "US",
       "aliases": ["UNRATE", "U-3"],
+      "counterparts": [
+        {
+          "dimension": "seasonal_adjustment",
+          "value": "NSA",
+          "seriesId": "UNRATENSA",
+          "label": "Civilian unemployment rate, not seasonally adjusted"
+        }
+      ],
       "notes": "Household survey (CPS) U-3 rate. NSA counterpart is UNRATENSA. Not the same as U-6 or insured unemployment."
     },
     {
@@ -59,6 +85,14 @@
       "unit": "thousands_of_persons",
       "geography": "US",
       "aliases": ["PAYEMS", "nonfarm payrolls"],
+      "counterparts": [
+        {
+          "dimension": "seasonal_adjustment",
+          "value": "NSA",
+          "seriesId": "PAYNSA",
+          "label": "All employees, total nonfarm, not seasonally adjusted"
+        }
+      ],
       "notes": "Establishment survey (CES). Subject to annual benchmark revisions. NSA counterpart is PAYNSA."
     },
     {
@@ -70,10 +104,19 @@
       "seriesId": "CES0500000003",
       "seasonalAdjustment": "SA",
       "priceKind": "nominal",
+      "priceBasis": "nominal",
       "frequency": "monthly",
       "unit": "usd_per_hour",
       "geography": "US",
       "aliases": ["CES0500000003", "AHE", "AHETPI"],
+      "counterparts": [
+        {
+          "dimension": "seasonal_adjustment",
+          "value": "NSA",
+          "seriesId": "CEU0500000003",
+          "label": "Average hourly earnings, total private, not seasonally adjusted"
+        }
+      ],
       "notes": "CES average hourly earnings of all employees, total private. Nominal dollars. NSA counterpart is CEU0500000003. Deflate explicitly (CPI-U or PCE) before calling this real wages."
     },
     {
@@ -85,11 +128,20 @@
       "seriesId": "GDPC1",
       "seasonalAdjustment": "SA",
       "priceKind": "real",
+      "priceBasis": "real",
       "frequency": "quarterly",
       "unit": "billions_chained_2017_usd",
       "geography": "US",
       "aliases": ["GDPC1", "real GDP"],
-      "notes": "BEA NIPA real GDP, seasonally adjusted annual rate. Advance / second / third vintages differ; this id is the latest vintage, not ALFRED."
+      "counterparts": [
+        {
+          "dimension": "price_basis",
+          "value": "nominal",
+          "seriesId": "GDP",
+          "label": "Gross domestic product, current dollars"
+        }
+      ],
+      "notes": "BEA NIPA real GDP, seasonally adjusted annual rate. Advance / second / third vintages differ; this id is the latest vintage, not ALFRED. Nominal counterpart is GDP — Prism will not remap real and nominal."
     },
     {
       "id": "fed-funds",
@@ -119,6 +171,14 @@
       "unit": "thousands_of_units_saar",
       "geography": "US",
       "aliases": ["HOUST", "starts"],
+      "counterparts": [
+        {
+          "dimension": "seasonal_adjustment",
+          "value": "NSA",
+          "seriesId": "HOUSTNSA",
+          "label": "Housing starts, not seasonally adjusted"
+        }
+      ],
       "notes": "Census New Residential Construction. Seasonally adjusted annual rate. NSA counterpart is HOUSTNSA."
     },
     {
@@ -145,6 +205,7 @@
       "seriesId": "PCEPI",
       "seasonalAdjustment": "SA",
       "priceKind": "index",
+      "priceBasis": "index",
       "frequency": "monthly",
       "unit": "index_2017_100",
       "geography": "US",
@@ -159,13 +220,14 @@
       "distributor": "ACS",
       "seriesId": "B19013_001E",
       "tableId": "B19013",
-      "seasonalAdjustment": "NSA",
+      "seasonalAdjustment": "NA",
       "priceKind": "nominal",
+      "priceBasis": "nominal",
       "frequency": "annual",
       "unit": "usd_inflation_unadjusted",
       "geography": "US",
       "aliases": ["B19013", "median household income"],
-      "notes": "American Community Survey table B19013, estimate B19013_001E. Not a FRED series. Choose 1-year vs 5-year and vintage explicitly. Nominal dollars; Census inflation-adjusts some published comparisons — do not assume that here."
+      "notes": "American Community Survey table B19013, estimate B19013_001E. Not a FRED series. Choose 1-year vs 5-year and vintage explicitly. Nominal dollars; Census inflation-adjusts some published comparisons — do not assume that here. Seasonal adjustment is not a Census ACS dimension."
     },
     {
       "id": "acs-employment-status",
@@ -175,13 +237,13 @@
       "distributor": "ACS",
       "seriesId": "B23025_001E",
       "tableId": "B23025",
-      "seasonalAdjustment": "NSA",
+      "seasonalAdjustment": "NA",
       "priceKind": "count",
       "frequency": "annual",
       "unit": "persons",
       "geography": "US",
       "aliases": ["B23025", "ACS labor force"],
-      "notes": "American Community Survey table B23025 (employment status). Universe is civilian / 16+ — confirm the line (total, in labor force, employed, unemployed) before charting. Not CPS UNRATE and not monthly."
+      "notes": "American Community Survey table B23025 (employment status). Universe is civilian / 16+ — confirm the line (total, in labor force, employed, unemployed) before charting. Not CPS UNRATE and not monthly. Seasonal adjustment is not a Census ACS dimension."
     }
   ]
 }

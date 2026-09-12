@@ -16,20 +16,30 @@ export type Agency = z.infer<typeof Agency>;
 export const Distributor = z.enum(["FRED", "BLS", "ACS", "BEA"]);
 export type Distributor = z.infer<typeof Distributor>;
 
-export const SeasonalAdjustment = z.enum(["SA", "NSA"]);
+export const SeasonalAdjustment = z.enum(["SA", "NSA", "NA"]);
 export type SeasonalAdjustment = z.infer<typeof SeasonalAdjustment>;
 
 export const PriceKind = z.enum(["nominal", "real", "index", "rate", "count"]);
 export type PriceKind = z.infer<typeof PriceKind>;
 
+export const PriceBasis = z.enum(["nominal", "real", "index"]);
+export type PriceBasis = z.infer<typeof PriceBasis>;
+
+export const VintagePolicy = z.enum(["latest", "as_of"]);
+export type VintagePolicy = z.infer<typeof VintagePolicy>;
+
 export const SeriesTransform = z.enum([
   "level",
+  "pc1",
   "yoy",
   "mom",
   "deflate",
   "index",
 ]);
 export type SeriesTransform = z.infer<typeof SeriesTransform>;
+
+export const ObservationTransform = z.enum(["level", "pc1"]);
+export type ObservationTransform = z.infer<typeof ObservationTransform>;
 
 export const SeriesBinding = z.object({
   conceptId: z.string().min(1),

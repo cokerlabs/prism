@@ -47,6 +47,19 @@ importers:
         version: 7.3.6
 
   apps/worker:
+    dependencies:
+      '@prism/catalog':
+        specifier: workspace:*
+        version: link:../../packages/catalog
+      '@prism/resolver':
+        specifier: workspace:*
+        version: link:../../packages/resolver
+      '@prism/spec':
+        specifier: workspace:*
+        version: link:../../packages/spec
+      '@prism/transforms':
+        specifier: workspace:*
+        version: link:../../packages/transforms
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260911.1
@@ -61,13 +74,26 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
 
+  packages/resolver:
+    dependencies:
+      '@prism/catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      '@prism/spec':
+        specifier: workspace:*
+        version: link:../spec
+
   packages/spec:
     dependencies:
       zod:
         specifier: ^3.25.76
         version: 3.25.76
 
-  packages/transforms: {}
+  packages/transforms:
+    dependencies:
+      '@prism/spec':
+        specifier: workspace:*
+        version: link:../spec
 
 packages:
 

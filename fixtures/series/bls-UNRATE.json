@@ -1,0 +1,41 @@
+{
+  "_recorded_from": "BLS publicAPI v2 shape",
+  "_recorded_at": "2026-09-12T00:00:00.000Z",
+  "_series_id": "UNRATE",
+  "status": "REQUEST_SUCCEEDED",
+  "responseTime": 12,
+  "message": [],
+  "Results": {
+    "series": [
+      {
+        "seriesID": "UNRATE",
+        "data": [
+          {
+            "year": "2026",
+            "period": "M08",
+            "periodName": "August",
+            "value": "4.1"
+          },
+          {
+            "year": "2026",
+            "period": "M07",
+            "periodName": "July",
+            "value": "4.1"
+          },
+          {
+            "year": "2025",
+            "period": "M08",
+            "periodName": "August",
+            "value": "4.3"
+          },
+          {
+            "year": "2025",
+            "period": "M01",
+            "periodName": "January",
+            "value": "4.0"
+          }
+        ]
+      }
+    ]
+  }
+}

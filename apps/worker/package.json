@@ -5,6 +5,12 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@prism/catalog": "workspace:*",
+    "@prism/resolver": "workspace:*",
+    "@prism/spec": "workspace:*",
+    "@prism/transforms": "workspace:*"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260911.1"
   }

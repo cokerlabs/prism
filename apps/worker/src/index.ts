@@ -1,7 +1,19 @@
-export interface Env {
+import { listConcepts } from "@prism/catalog";
+import { SeriesRequest } from "@prism/spec";
+import { DATA_SOURCE_UNAVAILABLE } from "./clients/errors";
+import { RateGate, realClock } from "./clients/polite";
+import { loadSeries, type SeriesRuntime, type WorkerEnv } from "./series";
+
+export interface Env extends WorkerEnv {
   DB: D1Database;
   ASSETS: Fetcher;
+  CACHE?: KVNamespace;
 }
+
+export type Runtime = SeriesRuntime;
+
+const sharedClock = realClock();
+const sharedGate = new RateGate(sharedClock);
 
 const BASE_PATH = "/in/prism";
 const API_PATH = `${BASE_PATH}/api`;
@@ -35,15 +47,98 @@ function normalizePath(pathname: string): string {
   return pathname;
 }
 
+function defaultRuntime(): Runtime {
+  return {
+    fetch: globalThis.fetch,
+    observationSource: "live",
+    clock: sharedClock,
+    gate: sharedGate,
+  };
+}
+
+function parseSeriesRequest(url: URL): SeriesRequest | { error: string } {
+  const parsed = SeriesRequest.safeParse({
+    seasonal_adjustment: url.searchParams.get("seasonal_adjustment") ?? undefined,
+    price_basis: url.searchParams.get("price_basis") ?? undefined,
+    transform: url.searchParams.get("transform") ?? undefined,
+    vintage_policy: url.searchParams.get("vintage_policy") ?? undefined,
+    as_of: url.searchParams.get("as_of") ?? undefined,
+    observation_start: url.searchParams.get("observation_start") ?? undefined,
+    observation_end: url.searchParams.get("observation_end") ?? undefined,
+  });
+  if (!parsed.success) {
+    return { error: "Invalid series request" };
+  }
+  return parsed.data;
+}
+
 export async function handleRequest(
   request: Request,
   env: Env,
+  runtime: Runtime = defaultRuntime(),
 ): Promise<Response> {
   const url = new URL(request.url);
   const path = normalizePath(url.pathname);
 
   if (path === `${API_PATH}/health`) {
     return json({ ok: true, service: "prism" });
+  }
+
+  if (path === `${API_PATH}/catalog`) {
+    return json({
+      version: "0.1.0",
+      concepts: listConcepts(),
+    });
+  }
+
+  const seriesMatch = /^\/in\/prism\/api\/series\/([^/]+)$/.exec(path);
+  if (seriesMatch?.[1]) {
+    const conceptId = decodeURIComponent(seriesMatch[1]);
+    const query = parseSeriesRequest(url);
+    if ("error" in query) {
+      return json({ error: "invalid", service: "prism", message: query.error }, 400);
+    }
+
+    const result = await loadSeries(conceptId, query, env, runtime);
+    if (result.status === "not_found") {
+      return json({ error: "not_found", service: "prism" }, 404);
+    }
+    if (result.status === "invalid") {
+      return json(
+        { error: "invalid", service: "prism", message: result.message },
+        400,
+      );
+    }
+    if (result.status === "clarify") {
+      return json(
+        {
+          error: "clarify",
+          service: "prism",
+          reason: result.reason,
+          message: result.message,
+          requested: result.requested,
+          catalog: result.catalog,
+          choices: result.choices,
+        },
+        409,
+      );
+    }
+    if (result.status === "unavailable") {
+      return json(
+        {
+          error: "data_source_unavailable",
+          service: "prism",
+          message: DATA_SOURCE_UNAVAILABLE,
+        },
+        503,
+      );
+    }
+    return json({
+      conceptId: result.conceptId,
+      nativeId: result.nativeId,
+      observations: result.observations,
+      provenance: result.provenance,
+    });
   }
 
   if (path === API_PATH || path.startsWith(`${API_PATH}/`)) {
