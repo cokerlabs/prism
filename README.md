@@ -1,6 +1,6 @@
 # Prism
 
-Coker Labs Project 1 — generative UI for economic data.
+Coker Labs — generative UI for economic data.
 
 Prism composes views from a curated catalog of official series (FRED, BLS, ACS). The point is to liberate knowledge from bad UI: ask a question, get a chart you can defend. Sources, transforms, and caveats are part of the view, not a footnote.
 
