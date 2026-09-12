@@ -92,22 +92,26 @@ Primary host: **cokerlabs.dev/in/prism/**.
 
 ## Secrets
 
-Agency pulls read Worker secrets. They are optional at build time. Series routes return **Data source unavailable** when the needed binding is missing.
+Series pulls read `FRED_API_KEY`. It is optional at build time. FRED-backed series return **Data source unavailable** when the binding is missing. BLS and Census keys are not used.
 
 ```bash
 wrangler secret put FRED_API_KEY
-wrangler secret put BLS_API_KEY
-wrangler secret put CENSUS_API_KEY
 ```
 
 | Binding | Used for |
 | --- | --- |
 | `FRED_API_KEY` | FRED series pull |
-| `BLS_API_KEY` | BLS public API |
-| `CENSUS_API_KEY` | ACS / Census |
 | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Compose (unused) |
 
 For local Wrangler, copy `.dev.vars.example` to `.dev.vars` (not committed).
+
+## Upstream etiquette
+
+Live fetches go to FRED only. Prism identifies itself as `Prism/0.1 (+https://cokerlabs.dev/in/prism; respectful bot)`, spaces FRED calls at most once per 500ms, honors `Retry-After`, and backs off with jitter on `429`. Responses are cached in the Worker (memory by default; KV `CACHE` if bound) with TTLs by frequency — daily at least one hour, monthly at least six, quarterly at least twelve. The default observation window is the last twenty years unless the caller asks for more.
+
+Use one FRED API key per application. See the [FRED API](https://fred.stlouisfed.org/docs/api/fred/). Do not scrape HTML when the published API will do. Do not retry in a tight loop.
+
+ACS and BLS catalog rows stay as metadata. They are not fetched yet.
 
 ## Current scope
 

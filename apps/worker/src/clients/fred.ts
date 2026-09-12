@@ -1,6 +1,8 @@
 import type { Observation } from "@prism/spec";
 import { DataSourceUnavailableError } from "./errors";
+import { politeFetch } from "./polite";
 import type { FetchRuntime, FetchedSeries } from "./types";
+import { defaultObservationStart } from "./window";
 
 const FRED_OBSERVATIONS =
   "https://api.stlouisfed.org/fred/series/observations";
@@ -51,13 +53,13 @@ export async function fetchFredSeries(
     throw new DataSourceUnavailableError("FRED");
   }
 
+  const observationStart =
+    options.observationStart ?? defaultObservationStart(new Date());
   const url = new URL(FRED_OBSERVATIONS);
   url.searchParams.set("series_id", options.seriesId);
   url.searchParams.set("api_key", options.apiKey);
   url.searchParams.set("file_type", "json");
-  if (options.observationStart) {
-    url.searchParams.set("observation_start", options.observationStart);
-  }
+  url.searchParams.set("observation_start", observationStart);
   if (options.observationEnd) {
     url.searchParams.set("observation_end", options.observationEnd);
   }
@@ -68,8 +70,17 @@ export async function fetchFredSeries(
 
   let response: Response;
   try {
-    response = await runtime.fetch(url);
-  } catch {
+    response = await politeFetch(url, undefined, {
+      fetch: runtime.fetch,
+      clock: runtime.clock,
+      gate: runtime.gate,
+      random: runtime.random,
+      source: "FRED",
+    });
+  } catch (error) {
+    if (error instanceof DataSourceUnavailableError) {
+      throw error;
+    }
     throw new DataSourceUnavailableError("FRED");
   }
 
@@ -85,7 +96,7 @@ export async function fetchFredSeries(
   return {
     observations: parseFredObservations(payload),
     sourceUrl: publicFredSeriesUrl(options.seriesId),
-    observationStart: payload.observation_start ?? options.observationStart,
+    observationStart: payload.observation_start ?? observationStart,
     observationEnd: payload.observation_end ?? options.observationEnd,
   };
 }

@@ -1,6 +1,8 @@
 import type { Observation } from "@prism/spec";
 import { DataSourceUnavailableError } from "./errors";
+import { politeFetch } from "./polite";
 import type { FetchRuntime, FetchedSeries } from "./types";
+import { DEFAULT_HISTORY_YEARS } from "./window";
 
 const BLS_TIMESERIES = "https://api.bls.gov/publicAPI/v2/timeseries/data/";
 
@@ -72,21 +74,35 @@ export async function fetchBlsSeries(
     new Date().getUTCFullYear(),
   );
   const startYear =
-    options.observationStart?.slice(0, 4) ?? String(Number(endYear) - 20);
+    options.observationStart?.slice(0, 4) ??
+    String(Number(endYear) - DEFAULT_HISTORY_YEARS);
 
   let response: Response;
   try {
-    response = await runtime.fetch(BLS_TIMESERIES, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        seriesid: [options.seriesId],
-        startyear: startYear,
-        endyear: endYear,
-        registrationkey: options.apiKey,
-      }),
-    });
-  } catch {
+    response = await politeFetch(
+      BLS_TIMESERIES,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          seriesid: [options.seriesId],
+          startyear: startYear,
+          endyear: endYear,
+          registrationkey: options.apiKey,
+        }),
+      },
+      {
+        fetch: runtime.fetch,
+        clock: runtime.clock,
+        gate: runtime.gate,
+        random: runtime.random,
+        source: "BLS",
+      },
+    );
+  } catch (error) {
+    if (error instanceof DataSourceUnavailableError) {
+      throw error;
+    }
     throw new DataSourceUnavailableError("BLS");
   }
 

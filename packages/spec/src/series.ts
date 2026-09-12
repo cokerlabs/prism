@@ -45,7 +45,7 @@ export const ProvenanceEcho = z.object({
   observationStart: z.string().min(1).optional(),
   observationEnd: z.string().min(1).optional(),
   retrievedAt: z.string().min(1),
-  observationSource: z.enum(["live", "recorded"]),
+  observationSource: z.enum(["live", "recorded", "cached"]),
   sourceUrl: z.string().min(1),
   notes: z.string().min(1),
   requested: z.object({

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { SeriesRequest } from "../src/series";
+import { ProvenanceEcho, SeriesRequest } from "../src/series";
 import {
   ObservationTransform,
   PriceBasis,
@@ -53,6 +53,11 @@ describe("series enums", () => {
     expect(VintagePolicy.parse("as_of")).toBe("as_of");
     expect(SeriesRequest.parse({}).transform).toBe("level");
     expect(SeriesRequest.parse({}).vintage_policy).toBe("latest");
+    expect(ProvenanceEcho.shape.observationSource.options).toEqual([
+      "live",
+      "recorded",
+      "cached",
+    ]);
   });
 });
 

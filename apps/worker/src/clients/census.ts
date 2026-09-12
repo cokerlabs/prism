@@ -1,5 +1,6 @@
 import type { Observation } from "@prism/spec";
 import { DataSourceUnavailableError } from "./errors";
+import { politeFetch } from "./polite";
 import type { FetchRuntime, FetchedSeries } from "./types";
 
 export type CensusTable = string[][];
@@ -54,8 +55,17 @@ export async function fetchCensusSeries(
 
   let response: Response;
   try {
-    response = await runtime.fetch(url);
-  } catch {
+    response = await politeFetch(url, undefined, {
+      fetch: runtime.fetch,
+      clock: runtime.clock,
+      gate: runtime.gate,
+      random: runtime.random,
+      source: "Census",
+    });
+  } catch (error) {
+    if (error instanceof DataSourceUnavailableError) {
+      throw error;
+    }
     throw new DataSourceUnavailableError("Census");
   }
 

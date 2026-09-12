@@ -37,7 +37,7 @@ type Provenance = {
   observationStart?: string;
   observationEnd?: string;
   retrievedAt: string;
-  observationSource: "live" | "recorded";
+  observationSource: "live" | "recorded" | "cached";
   sourceUrl: string;
   notes: string;
   requested: Record<string, string | undefined>;
@@ -341,7 +341,9 @@ export function App() {
                     {series.provenance.retrievedAt}
                     {series.provenance.observationSource === "recorded"
                       ? " · recorded"
-                      : ""}
+                      : series.provenance.observationSource === "cached"
+                        ? " · cached"
+                        : ""}
                   </dd>
                 </div>
               </dl>

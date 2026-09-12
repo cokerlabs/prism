@@ -1,14 +1,19 @@
 import { listConcepts } from "@prism/catalog";
 import { SeriesRequest } from "@prism/spec";
 import { DATA_SOURCE_UNAVAILABLE } from "./clients/errors";
+import { RateGate, realClock } from "./clients/polite";
 import { loadSeries, type SeriesRuntime, type WorkerEnv } from "./series";
 
 export interface Env extends WorkerEnv {
   DB: D1Database;
   ASSETS: Fetcher;
+  CACHE?: KVNamespace;
 }
 
 export type Runtime = SeriesRuntime;
+
+const sharedClock = realClock();
+const sharedGate = new RateGate(sharedClock);
 
 const BASE_PATH = "/in/prism";
 const API_PATH = `${BASE_PATH}/api`;
@@ -43,7 +48,12 @@ function normalizePath(pathname: string): string {
 }
 
 function defaultRuntime(): Runtime {
-  return { fetch: globalThis.fetch, observationSource: "live" };
+  return {
+    fetch: globalThis.fetch,
+    observationSource: "live",
+    clock: sharedClock,
+    gate: sharedGate,
+  };
 }
 
 function parseSeriesRequest(url: URL): SeriesRequest | { error: string } {

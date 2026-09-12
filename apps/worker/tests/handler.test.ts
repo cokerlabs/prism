@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { handleRequest, type Env } from "../src/index";
+import { createMemoryCache } from "../src/clients/cache";
 import type { FredObservationsPayload } from "../src/clients/fred";
+import { PRISM_USER_AGENT, createFakeClock } from "../src/clients/polite";
+import { handleRequest, type Env } from "../src/index";
 
 const fixturesDir = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -27,9 +29,14 @@ function envWithAssets(
   };
 }
 
-function fixtureFredFetch(): typeof fetch {
-  return (async (input) => {
+function fixtureFredFetch(calls?: Array<{ start?: string; agent?: string }>): typeof fetch {
+  return (async (input, init) => {
     const url = new URL(String(input instanceof Request ? input.url : input));
+    const headers = new Headers(init?.headers);
+    calls?.push({
+      start: url.searchParams.get("observation_start") ?? undefined,
+      agent: headers.get("User-Agent") ?? undefined,
+    });
     if (
       url.hostname === "api.stlouisfed.org" &&
       url.searchParams.get("series_id") === "CPIAUCSL"
@@ -73,6 +80,33 @@ describe("worker routing", () => {
     );
   });
 
+  it("does not fetch ACS or BLS concepts", async () => {
+    let fetched = false;
+    const response = await handleRequest(
+      new Request(
+        "https://cokerlabs.dev/in/prism/api/series/acs-median-hh-income",
+      ),
+      envWithAssets(() => new Response("unused"), { FRED_API_KEY: "test-key" }),
+      {
+        fetch: (async () => {
+          fetched = true;
+          return new Response("no", { status: 500 });
+        }) as typeof fetch,
+        now: () => new Date("2026-09-12T00:00:00.000Z"),
+        clock: createFakeClock(),
+        cache: createMemoryCache(),
+      },
+    );
+
+    expect(fetched).toBe(false);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      error: "data_source_unavailable",
+      service: "prism",
+      message: "Data source unavailable",
+    });
+  });
+
   it("returns Data source unavailable when the FRED key is missing", async () => {
     const response = await handleRequest(
       new Request("https://cokerlabs.dev/in/prism/api/series/cpi-u-all-items"),
@@ -88,15 +122,18 @@ describe("worker routing", () => {
   });
 
   it("echoes provenance for a fixture-backed FRED series", async () => {
+    const calls: Array<{ start?: string; agent?: string }> = [];
     const response = await handleRequest(
       new Request(
         "https://cokerlabs.dev/in/prism/api/series/CPIAUCSL?transform=pc1",
       ),
       envWithAssets(() => new Response("unused"), { FRED_API_KEY: "test-key" }),
       {
-        fetch: fixtureFredFetch(),
+        fetch: fixtureFredFetch(calls),
         now: () => new Date("2026-09-12T00:00:00.000Z"),
+        clock: createFakeClock(),
         observationSource: "recorded",
+        cache: createMemoryCache(),
       },
     );
     const body = (await response.json()) as {
@@ -108,6 +145,7 @@ describe("worker routing", () => {
         priceBasis: string;
         transform: string;
         observationSource: string;
+        observationStart?: string;
         requested: { transform: string; conceptId: string };
         sourceUrl: string;
         notes: string;
@@ -134,6 +172,38 @@ describe("worker routing", () => {
     const latest = body.observations.at(-1);
     expect(latest?.date).toBe("2026-08-01");
     expect(latest?.value).not.toBeNull();
+    expect(body.provenance.observationStart).toBe("2023-01-01");
+    expect(calls[0]?.start).toBe("2006-09-12");
+    expect(calls[0]?.agent).toBe(PRISM_USER_AGENT);
+  });
+
+  it("prefers a cache hit over a second live call", async () => {
+    const calls: Array<{ start?: string; agent?: string }> = [];
+    const cache = createMemoryCache();
+    const clock = createFakeClock();
+    const runtime = {
+      fetch: fixtureFredFetch(calls),
+      now: () => new Date("2026-09-12T00:00:00.000Z"),
+      clock,
+      cache,
+    };
+    const env = envWithAssets(() => new Response("unused"), {
+      FRED_API_KEY: "test-key",
+    });
+    const request = new Request(
+      "https://cokerlabs.dev/in/prism/api/series/cpi-u-all-items",
+    );
+
+    const first = await handleRequest(request, env, runtime);
+    const second = await handleRequest(request, env, runtime);
+    const body = (await second.json()) as {
+      provenance: { observationSource: string };
+    };
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(calls).toHaveLength(1);
+    expect(body.provenance.observationSource).toBe("cached");
   });
 
   it("returns structured clarify choices instead of remapping SA/NSA", async () => {

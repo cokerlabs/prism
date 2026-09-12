@@ -7,23 +7,47 @@ import type {
   SeriesRequest,
 } from "@prism/spec";
 import { applyTransform } from "@prism/transforms";
-import { fetchBlsSeries } from "./clients/bls";
-import { fetchCensusSeries } from "./clients/census";
+import {
+  cacheTtlSeconds,
+  createKvCache,
+  createMemoryCache,
+  parseFetchedSeries,
+  serializeFetchedSeries,
+  seriesCacheKey,
+  type SeriesCache,
+} from "./clients/cache";
 import { DataSourceUnavailableError } from "./clients/errors";
 import { fetchFredSeries } from "./clients/fred";
+import type { RateGate, PoliteClock } from "./clients/polite";
 import type { FetchedSeries } from "./clients/types";
+import { defaultObservationStart } from "./clients/window";
 
 export type WorkerEnv = {
   FRED_API_KEY?: string;
-  BLS_API_KEY?: string;
-  CENSUS_API_KEY?: string;
+  CACHE?: KVNamespace;
 };
 
 export type SeriesRuntime = {
   fetch: typeof fetch;
   now?: () => Date;
-  observationSource?: "live" | "recorded";
+  observationSource?: "live" | "recorded" | "cached";
+  clock?: PoliteClock;
+  gate?: RateGate;
+  random?: () => number;
+  cache?: SeriesCache;
 };
+
+const sharedMemoryCache = createMemoryCache();
+
+export function cacheStoreFor(env: WorkerEnv, runtime: SeriesRuntime): SeriesCache {
+  if (runtime.cache) {
+    return runtime.cache;
+  }
+  if (env.CACHE) {
+    return createKvCache(env.CACHE);
+  }
+  return sharedMemoryCache;
+}
 
 export type SeriesOk = {
   status: "ok";
@@ -68,44 +92,22 @@ async function fetchNative(
   request: SeriesRequest,
   env: WorkerEnv,
   runtime: SeriesRuntime,
+  observationStart: string,
 ): Promise<FetchedSeries> {
-  if (concept.distributor === "FRED") {
-    return fetchFredSeries(
-      {
-        apiKey: env.FRED_API_KEY,
-        seriesId: concept.seriesId,
-        observationStart: request.observation_start,
-        observationEnd: request.observation_end,
-        vintagePolicy: request.vintage_policy,
-        asOf: request.as_of,
-      },
-      runtime,
-    );
+  if (concept.distributor !== "FRED") {
+    throw new DataSourceUnavailableError(concept.distributor);
   }
-  if (concept.distributor === "BLS") {
-    return fetchBlsSeries(
-      {
-        apiKey: env.BLS_API_KEY,
-        seriesId: concept.seriesId,
-        observationStart: request.observation_start,
-        observationEnd: request.observation_end,
-      },
-      runtime,
-    );
-  }
-  if (concept.distributor === "ACS") {
-    const now = runtime.now?.() ?? new Date();
-    return fetchCensusSeries(
-      {
-        apiKey: env.CENSUS_API_KEY,
-        variable: concept.seriesId,
-        year: request.as_of?.slice(0, 4) ?? request.observation_end?.slice(0, 4),
-      },
-      runtime,
-      now,
-    );
-  }
-  throw new DataSourceUnavailableError(concept.distributor);
+  return fetchFredSeries(
+    {
+      apiKey: env.FRED_API_KEY,
+      seriesId: concept.seriesId,
+      observationStart,
+      observationEnd: request.observation_end,
+      vintagePolicy: request.vintage_policy,
+      asOf: request.as_of,
+    },
+    runtime,
+  );
 }
 
 function provenanceEcho(
@@ -115,7 +117,7 @@ function provenanceEcho(
   fetched: FetchedSeries,
   transform: ObservationTransform,
   retrievedAt: string,
-  observationSource: "live" | "recorded",
+  observationSource: "live" | "recorded" | "cached",
 ): ProvenanceEcho {
   return {
     conceptId: concept.id,
@@ -192,14 +194,52 @@ export async function loadSeries(
     };
   }
 
+  const now = runtime.now?.() ?? new Date();
+  const observationStart =
+    request.observation_start ?? defaultObservationStart(now);
+  const windowed: SeriesRequest = {
+    ...request,
+    observation_start: observationStart,
+  };
+
   try {
-    const fetched = await fetchNative(resolved.concept, request, env, runtime);
+    const cache = cacheStoreFor(env, runtime);
+    const key = seriesCacheKey({
+      source: resolved.concept.distributor,
+      nativeId: resolved.nativeId,
+      observationStart,
+      observationEnd: request.observation_end,
+      vintagePolicy: request.vintage_policy,
+      asOf: request.as_of,
+    });
+    const cachedRaw = await cache.get(key);
+    let fetched: FetchedSeries;
+    let observationSource: "live" | "recorded" | "cached";
+    if (cachedRaw) {
+      fetched = parseFetchedSeries(cachedRaw);
+      observationSource =
+        runtime.observationSource === "recorded" ? "recorded" : "cached";
+    } else {
+      fetched = await fetchNative(
+        resolved.concept,
+        windowed,
+        env,
+        runtime,
+        observationStart,
+      );
+      await cache.set(
+        key,
+        serializeFetchedSeries(fetched),
+        cacheTtlSeconds(resolved.concept.frequency),
+      );
+      observationSource = runtime.observationSource ?? "live";
+    }
     const observations = applyTransform(
       fetched.observations,
       resolved.transform,
       resolved.concept.frequency,
     );
-    const retrievedAt = (runtime.now?.() ?? new Date()).toISOString();
+    const retrievedAt = now.toISOString();
     return {
       status: "ok",
       conceptId: resolved.concept.id,
@@ -209,10 +249,13 @@ export async function loadSeries(
         resolved.concept,
         request,
         conceptId,
-        fetched,
+        {
+          ...fetched,
+          observationStart: fetched.observationStart ?? observationStart,
+        },
         resolved.transform,
         retrievedAt,
-        runtime.observationSource ?? "live",
+        observationSource,
       ),
     };
   } catch (error) {
