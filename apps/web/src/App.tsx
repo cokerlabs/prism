@@ -81,7 +81,9 @@ export function App() {
             <p>Sources, transforms, and caveats for the current view.</p>
           </div>
           <div className="empty">
-            <p className="empty-signal">No view yet</p>
+            <p>
+              Sources and transforms appear here after you compose a view.
+            </p>
             <p>
               Prism will not draw a series until you can see who published it,
               how it was transformed, and what it is not. That gate is the
@@ -93,10 +95,6 @@ export function App() {
 
       <footer className="foot">
         <span>cokerlabs.dev/in/prism</span>
-        <span className="sep" aria-hidden="true">
-          /
-        </span>
-        <span>Coker Labs</span>
       </footer>
     </div>
   );
