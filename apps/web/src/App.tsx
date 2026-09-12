@@ -40,7 +40,7 @@ export function App() {
         <div className="brand">
           <span className="wordmark">Prism</span>
           <span className="rule" aria-hidden="true" />
-          <span className="kicker">Coker Labs · Project 1</span>
+          <span className="kicker">Coker Labs</span>
         </div>
         <p className="status" data-state={health}>
           {health === "checking"
