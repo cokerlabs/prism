@@ -4,26 +4,26 @@ Coker Labs — generative UI for economic data.
 
 Prism composes views from a curated catalog of official series (FRED, BLS, ACS). The point is to liberate knowledge from bad UI: ask a question, get a chart you can defend. Sources, transforms, and caveats are part of the view, not a footnote.
 
-This repo is the scaffold. No live agency fetch, no LLM compose, no auth in app code.
+This repository is the Prism Worker and UI. Agency fetches, compose, and application-level auth live outside this codebase. Access is enforced at the Cloudflare edge.
 
 ## Access
 
-Prism is reachable **only** under existing Cloudflare Access apps:
+Prism is reachable **only** under existing Cloudflare Access applications:
 
 | Host | Path |
 | --- | --- |
 | `cokerlabs.dev` (primary) | `/in/prism/` |
 | `justincoker.com` (optional) | `/in/prism/` |
 
-Those Access apps already cover `justincoker.com/in*` and `cokerlabs.dev/in*`. Access is **edge-configured outside this repo**. This Worker must not implement login, sessions, or identity checks.
+Those Access applications cover `justincoker.com/in*` and `cokerlabs.dev/in*`. Access is configured at the edge, outside this repository. This Worker does not implement login, sessions, or identity checks.
 
-**Never attach a Worker custom domain at the unprotected root.** Do not route `cokerlabs.dev/` or `justincoker.com/` to this Worker. `workers_dev` is off so a public `*.workers.dev` hostname is not published.
+Do not attach a Worker custom domain at the unprotected root. Do not route `cokerlabs.dev/` or `justincoker.com/` to this Worker. `workers_dev` is disabled so a public `*.workers.dev` hostname is not published.
 
-The UI is built with Vite `base: /in/prism/` and assets nested at `dist/in/prism/`. The Worker 404s `/`. There is no marketing page at the root.
+The UI is built with Vite `base: /in/prism/` and assets nested at `dist/in/prism/`. The Worker returns 404 for `/`. There is no marketing page at the root.
 
-### Un-gating later
+### Public access
 
-To make Prism public, change the Cloudflare Access application (or its path) in the dashboard. Do not “un-gate” by adding a public site at `/` or by attaching this Worker to a bare hostname.
+To make Prism public, change the Cloudflare Access application (or its path) in the dashboard. Do not add a public site at `/` or attach this Worker to a bare hostname.
 
 ## Layout
 
@@ -32,9 +32,9 @@ wrangler.toml
 apps/web/            UI, served at /in/prism/
 apps/worker/         Worker entry: static + /in/prism/api/*
 packages/spec/       Zod ViewSpec
-packages/catalog/    Curated series stub (FRED / BLS / ACS)
-packages/transforms/ Pure transform stubs
-fixtures/prompts/    Placeholder golden prompts
+packages/catalog/    Curated series (FRED / BLS / ACS)
+packages/transforms/ Pure transforms
+fixtures/prompts/    Golden prompts
 ```
 
 ## Local development
@@ -46,7 +46,7 @@ pnpm install
 pnpm dev            # Vite UI at http://localhost:5173/in/prism/
 ```
 
-`http://localhost:5173/` is 404 by design. The Vite dev server stubs `GET /in/prism/api/health`.
+`http://localhost:5173/` returns 404. The Vite dev server handles `GET /in/prism/api/health`.
 
 Production-shaped local (static assets + Worker):
 
@@ -75,17 +75,17 @@ Primary host: **cokerlabs.dev/in/prism/**.
 
 `workers_dev` stays off. Do not attach this Worker at the unprotected root.
 
-## Secrets (later — do not add yet)
+## Secrets
 
 | Binding | Used for |
 | --- | --- |
 | `FRED_API_KEY` | FRED series pull |
 | `BLS_API_KEY` | BLS public API |
 | `CENSUS_API_KEY` | ACS / Census |
-| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Compose (undecided) |
+| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Compose |
 
-KV comes later for cache. No keys are required for this scaffold. `/in/prism/api/health` returns `{ "ok": true, "service": "prism" }`.
+KV is reserved for cache. No keys are required to run the current Worker. `/in/prism/api/health` returns `{ "ok": true, "service": "prism" }`.
 
-## Out of scope (this scaffold)
+## Current scope
 
-Real FRED/BLS/ACS fetch, LLM compose, auth code, maps, Python.
+This repository does not include live FRED/BLS/ACS fetch, LLM compose, application auth, maps, or Python.
